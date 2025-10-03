@@ -16,7 +16,7 @@ public class CarResourceTest {
           .when().get("/car")
           .then()
              .statusCode(200)
-             .body("$", hasSize(2));
+             .body("", hasSize(2));
     }
 
     @Test
