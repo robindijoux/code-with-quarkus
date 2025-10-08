@@ -98,32 +98,32 @@ fi
 log_info "📝 STEP 1/6: Creating .env file"
 
 # Check that template exists
-if [ ! -f ".env.template" ]; then
-    log_error ".env.template file not found"
+if [ ! -f ".env.deployment.template" ]; then
+    log_error ".env.deployment.template file not found"
     exit 1
 fi
 
 # Copy template and replace variables
-log_info "Copying .env template..."
-cp .env.template .env
+log_info "Copying .env.deployment.template..."
+cp .env.deployment.template .env.deployment
 
 # Replace placeholders
 log_info "Configuring project-specific variables..."
-sed -i.bak "s/__PROJECT_NAME__/$PROJECT_NAME/g" .env
-sed -i.bak "s/__PROJECT_VERSION__/1.0.0-SNAPSHOT/g" .env
-sed -i.bak "s/__PROJECT_ARTIFACT_ID__/$MAVEN_ARTIFACT_ID/g" .env
+sed -i.bak "s/__PROJECT_NAME__/$PROJECT_NAME/g" .env.deployment
+sed -i.bak "s/__PROJECT_VERSION__/1.0.0-SNAPSHOT/g" .env.deployment
+sed -i.bak "s/__PROJECT_ARTIFACT_ID__/$MAVEN_ARTIFACT_ID/g" .env.deployment
 
 # Remove backup file
-rm -f .env.bak
+rm -f .env.deployment.bak
 
 # Configure AWS account if provided
 if [ -n "$AWS_ACCOUNT_ID" ]; then
     log_info "Configuring AWS account..."
-    sed -i.bak "s/AWS_ACCOUNT_ID=\"\"/AWS_ACCOUNT_ID=\"$AWS_ACCOUNT_ID\"/g" .env
-    rm -f .env.bak
+    sed -i.bak "s/AWS_ACCOUNT_ID=\"\"/AWS_ACCOUNT_ID=\"$AWS_ACCOUNT_ID\"/g" .env.deployment
+    rm -f .env.deployment.bak
 fi
 
-log_success "✅ .env file created and configured"
+log_success "✅ .env.deployment file created and configured"
 
 # ============================================================================
 # STEP 2: POM.XML UPDATE
