@@ -34,6 +34,8 @@ else
     exit 1
 fi
 
+read -rp "Image version tag (default: latest): " IMAGE_TAG
+
 # Required variables with default values
 PROJECT_NAME=${PROJECT_NAME:-"quarkus-container-api"}
 AWS_REGION=${AWS_REGION:-"eu-west-3"}

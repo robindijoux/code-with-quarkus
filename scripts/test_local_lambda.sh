@@ -6,7 +6,8 @@ echo "=========================="
 # Configuration
 REGION="eu-west-3"
 REPO_NAME="portfolio-rbndjx"
-IMAGE_TAG="1.0.0-SNAPSHOT"
+read -rp "Enter image tag to test (default: latest): " IMAGE_TAG
+IMAGE_TAG=${IMAGE_TAG:-latest}
 REGISTRY="259726931000.dkr.ecr.${REGION}.amazonaws.com"
 FULL_IMAGE="${REGISTRY}/${REPO_NAME}:${IMAGE_TAG}"
 LOCAL_PORT=9000
