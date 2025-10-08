@@ -1,14 +1,12 @@
 #!/bin/bash
 
 # ============================================================================
-# 🚀 COMPLETE QUARKUS LAMBDA DEPLOYMENT
+# 🚀 QUARKUS CONTAINER BUILD & ECR DEPLOYMENT
 # ============================================================================
-# This script performs a complete deployment:
+# This script performs:
 # 1. Native build
 # 2. Docker build 
 # 3. Push to ECR
-# 4. Lambda creation/update
-# 5. Function URL configuration
 
 set -euo pipefail
 
@@ -26,28 +24,38 @@ log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
 log_error() { echo -e "${RED}❌ $1${NC}"; }
 
 # Loading configuration
-if [ -f ".env" ]; then
-    log_info "Loading configuration from .env"
-    export $(grep -v '^#' .env | xargs)
+if [ -f ".env.deployment" ]; then
+    log_info "Loading deployment configuration from .env.deployment"
+    set -a
+    source .env.deployment
+    set +a
 else
-    log_error ".env file not found. Copy .env.template to .env and configure it."
+    log_error ".env.deployment file not found. Create .env.deployment with deployment configuration."
     exit 1
 fi
 
 # Required variables with default values
-PROJECT_NAME=${PROJECT_NAME:-"quarkus-lambda-api"}
+PROJECT_NAME=${PROJECT_NAME:-"quarkus-container-api"}
 AWS_REGION=${AWS_REGION:-"eu-west-3"}
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
-ECR_REPOSITORY_NAME=${ECR_REPOSITORY_NAME:-"$PROJECT_NAME"}
-LAMBDA_FUNCTION_NAME=${LAMBDA_FUNCTION_NAME:-"$PROJECT_NAME"}
+
+# Sanitize names for Docker/ECR compatibility AFTER loading .env
+# Docker repository names must be lowercase and contain only: a-z, 0-9, -, _, .
+ECR_REPOSITORY_NAME=$(echo "${ECR_REPOSITORY_NAME:-$PROJECT_NAME}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9._-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
+
 IMAGE_TAG=${IMAGE_TAG:-"latest"}
-LAMBDA_ARCHITECTURE=${LAMBDA_ARCHITECTURE:-"arm64"}
-LAMBDA_MEMORY=${LAMBDA_MEMORY:-"512"}
-LAMBDA_TIMEOUT=${LAMBDA_TIMEOUT:-"30"}
+DOCKER_PLATFORM=${DOCKER_PLATFORM:-"linux/arm64"}
 
 # Validation of required variables
 if [ -z "$AWS_ACCOUNT_ID" ]; then
     log_error "AWS_ACCOUNT_ID must be defined in .env"
+    exit 1
+fi
+
+# Validate ECR repository name format
+if [[ ! "$ECR_REPOSITORY_NAME" =~ ^[a-z0-9._-]+$ ]]; then
+    log_error "ECR repository name contains invalid characters: $ECR_REPOSITORY_NAME"
+    log_info "ECR names must contain only: lowercase letters, numbers, dots, hyphens, underscores"
     exit 1
 fi
 
@@ -59,15 +67,18 @@ log_info "=== CONFIGURATION ==="
 echo "Project         : $PROJECT_NAME"
 echo "AWS Region      : $AWS_REGION"
 echo "ECR Repository  : $ECR_REPOSITORY_NAME"
-echo "Lambda Function : $LAMBDA_FUNCTION_NAME"
-echo "Architecture    : $LAMBDA_ARCHITECTURE"
+echo "Docker Platform : $DOCKER_PLATFORM"
+echo "Image Tag       : $IMAGE_TAG"
 echo "Image URI       : $IMAGE_URI"
+if [ "$ECR_REPOSITORY_NAME" != "$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')" ]; then
+    log_info "ℹ️  Repository name was sanitized for Docker compatibility"
+fi
 echo ""
 
 # ============================================================================
 # STEP 1: NATIVE BUILD
 # ============================================================================
-log_info "🔨 STEP 1/5: Quarkus native build"
+log_info "🔨 STEP 1/3: Quarkus native build"
 
 if ! command -v ./mvnw >/dev/null 2>&1; then
     log_error "Maven wrapper (./mvnw) not found"
@@ -79,17 +90,21 @@ fi
     -Dquarkus.native.debug.enabled=false \
     -Dquarkus.native.enable-reports=false
 
-if [ ! -f "target/*-runner" ]; then
+# Check if native binary was created
+NATIVE_BINARY=$(find target -name "*-runner" -type f 2>/dev/null | head -1)
+if [ -z "$NATIVE_BINARY" ]; then
     log_error "Native binary not found in target/"
+    log_info "Available files in target/:"
+    ls -la target/ 2>/dev/null || echo "target/ directory not found"
     exit 1
 fi
 
-log_success "Native build completed"
+log_success "Native build completed: $NATIVE_BINARY"
 
 # ============================================================================
 # STEP 2: DOCKER BUILD
 # ============================================================================
-log_info "🐳 STEP 2/5: Docker image build"
+log_info "🐳 STEP 2/3: Docker image build"
 
 if [ ! -f "src/main/docker/Dockerfile.native.lambda" ]; then
     log_error "Dockerfile.native.lambda not found"
@@ -99,7 +114,7 @@ fi
 # Build with specific platform
 docker buildx build \
     --load \
-    --platform "linux/${LAMBDA_ARCHITECTURE}" \
+    --platform "$DOCKER_PLATFORM" \
     -f src/main/docker/Dockerfile.native.lambda \
     -t "${ECR_REPOSITORY_NAME}:${IMAGE_TAG}" \
     .
@@ -107,9 +122,18 @@ docker buildx build \
 log_success "Docker image created: ${ECR_REPOSITORY_NAME}:${IMAGE_TAG}"
 
 # ============================================================================
-# STEP 3: ECR VERIFICATION
+# STEP 3: ECR DEPLOYMENT
 # ============================================================================
-log_info "📦 STEP 3/5: ECR repository verification"
+log_info "📦 STEP 3/3: ECR deployment"
+
+# ECR login
+log_info "Logging into ECR..."
+TOKEN=$(aws ecr get-login-password --region "$AWS_REGION")
+if [ -z "$TOKEN" ]; then
+    log_error "Failed to get ECR login token"
+    exit 1
+fi
+echo "$TOKEN" | docker login --username AWS --password-stdin $ECR_URI
 
 # Check if repository exists
 if ! aws ecr describe-repositories \
@@ -128,13 +152,8 @@ else
     log_success "ECR repository already exists"
 fi
 
-# ============================================================================
-# STEP 4: PUSH TO ECR
-# ============================================================================
-log_info "⬆️  STEP 4/5: Push to ECR"
-
-# ECR login
-log_info "Connecting to ECR..."
+# ECR login (for push)
+log_info "Connecting to ECR for push..."
 aws ecr get-login-password --region "$AWS_REGION" | \
     docker login --username AWS --password-stdin "$ECR_URI"
 
@@ -145,143 +164,22 @@ docker push "$IMAGE_URI"
 log_success "Image pushed to ECR: $IMAGE_URI"
 
 # ============================================================================
-# STEP 5: LAMBDA DEPLOYMENT
-# ============================================================================
-log_info "☁️  STEP 5/5: Lambda deployment"
-
-# Check if function exists
-if aws lambda get-function \
-    --function-name "$LAMBDA_FUNCTION_NAME" \
-    --region "$AWS_REGION" >/dev/null 2>&1; then
-    
-    log_info "Updating existing function..."
-    
-    # Update code
-    aws lambda update-function-code \
-        --function-name "$LAMBDA_FUNCTION_NAME" \
-        --image-uri "$IMAGE_URI" \
-        --region "$AWS_REGION"
-    
-    # Update configuration
-    aws lambda update-function-configuration \
-        --function-name "$LAMBDA_FUNCTION_NAME" \
-        --memory-size "$LAMBDA_MEMORY" \
-        --timeout "$LAMBDA_TIMEOUT" \
-        --region "$AWS_REGION"
-    
-    log_success "Lambda function updated"
-    
-else
-    log_info "Creating new Lambda function..."
-    
-    # Create IAM role if needed
-    ROLE_NAME="${LAMBDA_FUNCTION_NAME}-execution-role"
-    ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ROLE_NAME}"
-    
-    if ! aws iam get-role --role-name "$ROLE_NAME" >/dev/null 2>&1; then
-        log_info "Creating IAM role..."
-        
-        # Trust policy for Lambda
-        cat > /tmp/trust-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOF
-        
-        aws iam create-role \
-            --role-name "$ROLE_NAME" \
-            --assume-role-policy-document file:///tmp/trust-policy.json
-        
-        # Attach basic Lambda policy
-        aws iam attach-role-policy \
-            --role-name "$ROLE_NAME" \
-            --policy-arn "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-        
-        log_success "IAM role created"
-        
-        # Wait for role to be available
-        sleep 10
-    fi
-    
-    # Create function
-    aws lambda create-function \
-        --function-name "$LAMBDA_FUNCTION_NAME" \
-        --role "$ROLE_ARN" \
-        --code ImageUri="$IMAGE_URI" \
-        --package-type Image \
-        --architectures "$LAMBDA_ARCHITECTURE" \
-        --memory-size "$LAMBDA_MEMORY" \
-        --timeout "$LAMBDA_TIMEOUT" \
-        --region "$AWS_REGION"
-    
-    log_success "Lambda function created"
-fi
-
-# ============================================================================
-# FUNCTION URL CONFIGURATION
-# ============================================================================
-log_info "🔗 Function URL configuration"
-
-# Check if Function URL exists
-FUNCTION_URL=$(aws lambda get-function-url-config \
-    --function-name "$LAMBDA_FUNCTION_NAME" \
-    --region "$AWS_REGION" \
-    --query 'FunctionUrl' \
-    --output text 2>/dev/null || echo "None")
-
-if [ "$FUNCTION_URL" = "None" ]; then
-    log_info "Creating Function URL..."
-    
-    FUNCTION_URL=$(aws lambda create-function-url-config \
-        --function-name "$LAMBDA_FUNCTION_NAME" \
-        --region "$AWS_REGION" \
-        --auth-type NONE \
-        --cors "AllowOrigins=*,AllowMethods=GET\\,POST\\,PUT\\,DELETE\\,OPTIONS,AllowHeaders=*,MaxAge=86400" \
-        --query 'FunctionUrl' \
-        --output text)
-    
-    log_success "Function URL created"
-else
-    log_success "Function URL already exists"
-fi
-
-# ============================================================================
 # DEPLOYMENT SUMMARY
 # ============================================================================
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_success "🎉 DEPLOYMENT SUCCESSFUL!"
+log_success "🎉 ECR DEPLOYMENT SUCCESSFUL!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "🌐 Your API URL          : $FUNCTION_URL"
-echo "📊 Lambda Function       : $LAMBDA_FUNCTION_NAME"
-echo "🏗️  Architecture         : $LAMBDA_ARCHITECTURE"
-echo "💾 Memory               : ${LAMBDA_MEMORY} MB"
-echo "⏱️  Timeout              : ${LAMBDA_TIMEOUT}s"
 echo "📦 ECR Image            : $IMAGE_URI"
+echo "🏗️  Docker Platform     : $DOCKER_PLATFORM"
 echo "🌍 Region               : $AWS_REGION"
+echo "🏷️  Tag                 : $IMAGE_TAG"
 echo ""
-echo "🧪 Basic tests:"
-echo "curl $FUNCTION_URL/hello"
-echo "curl $FUNCTION_URL/car"
-echo ""
-echo "📋 Real-time logs:"
-echo "aws logs tail /aws/lambda/$LAMBDA_FUNCTION_NAME --region $AWS_REGION --follow"
+echo "💡 Next steps:"
+echo "- Use this image in your container orchestration platform"
+echo "- Deploy to ECS, EKS, or other container services"
+echo "- Pull the image: docker pull $IMAGE_URI"
 echo ""
 
-# Save URL to .env
-if [ -f ".env" ] && ! grep -q "LAMBDA_FUNCTION_URL=" .env; then
-    echo "LAMBDA_FUNCTION_URL=\"$FUNCTION_URL\"" >> .env
-    log_info "URL saved to .env"
-fi
-
-log_success "Deployment completed successfully!"
+log_success "Container deployment completed successfully!"

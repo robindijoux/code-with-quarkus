@@ -125,143 +125,82 @@ fi
 
 log_success "✅ .env file created and configured"
 
-# === CONFIGURATION AWS ===
-AWS_REGION="eu-west-3"
-AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID"
-ECR_REPOSITORY_NAME="$ECR_REPOSITORY_NAME"
-LAMBDA_FUNCTION_NAME="$LAMBDA_FUNCTION_NAME"
-
-# === CONFIGURATION BUILD ===
-IMAGE_TAG="latest"
-LAMBDA_ARCHITECTURE="arm64"
-LAMBDA_MEMORY="512"
-LAMBDA_TIMEOUT="30"
-
-# === CONFIGURATION URLS (généré automatiquement) ===
-# Sera rempli après le premier déploiement
-LAMBDA_FUNCTION_URL=""
-
-# === CONFIGURATION CORS ===
-CORS_ALLOW_ORIGINS="*"
-CORS_ALLOW_METHODS="GET,POST,PUT,DELETE,OPTIONS"
-CORS_ALLOW_HEADERS="*"
-CORS_MAX_AGE="86400"
-
-# === CONFIGURATION LOGGING ===
-LOG_LEVEL="INFO"
-DEBUG_MODE="false"
-
-# === CONFIGURATION NATIVE BUILD ===
-NATIVE_DEBUG_ENABLED="false"
-NATIVE_ENABLE_REPORTS="false"
-NATIVE_ADDITIONAL_BUILD_ARGS="-H:+UnlockExperimentalVMOptions,-H:+UseG1GC,-H:MaxRAMPercentage=80"
-EOF
-
-log_success "✅ Fichier .env créé et configuré"
-
 # ============================================================================
-# ÉTAPE 2 : TRANSFORMATION DU POM.XML
+# STEP 2: POM.XML UPDATE
 # ============================================================================
-
-# ============================================================================
-# ÉTAPE 2 : MISE À JOUR DU POM.XML
-# ============================================================================
-log_info "🔧 ÉTAPE 2/6 : Mise à jour du pom.xml"
+log_info "🔧 STEP 2/6: Updating pom.xml"
 
 if [ -f "pom-template.xml" ]; then
-    # Utilisation du template paramétrable
+    # Using parameterizable template
     cp pom-template.xml pom.xml
     
-    # Remplacement des variables dans le pom.xml
+    # Variable replacement in pom.xml
     sed -i.bak "s/\${MAVEN_GROUP_ID:org.acme}/$MAVEN_GROUP_ID/g" pom.xml
     sed -i.bak "s/\${MAVEN_ARTIFACT_ID:quarkus-lambda-bootstrap}/$MAVEN_ARTIFACT_ID/g" pom.xml
     sed -i.bak "s/\${PROJECT_VERSION:1.0.0-SNAPSHOT}/1.0.0-SNAPSHOT/g" pom.xml
     sed -i.bak "s/\${PROJECT_NAME:Quarkus Lambda Bootstrap}/$PROJECT_NAME/g" pom.xml
-    sed -i.bak "s/\${PROJECT_DESCRIPTION:Bootstrap project for Quarkus Lambda APIs}/API REST Quarkus native pour AWS Lambda/g" pom.xml
+    sed -i.bak "s/\${PROJECT_DESCRIPTION:Bootstrap project for Quarkus Lambda APIs}/Native Quarkus REST API for AWS Lambda/g" pom.xml
     
     rm pom.xml.bak
 else
-    # Mise à jour du pom.xml existant
+    # Updating existing pom.xml
     sed -i.bak "s/<groupId>org\.acme<\/groupId>/<groupId>$MAVEN_GROUP_ID<\/groupId>/g" pom.xml
     sed -i.bak "s/<artifactId>code-with-quarkus<\/artifactId>/<artifactId>$MAVEN_ARTIFACT_ID<\/artifactId>/g" pom.xml
     rm pom.xml.bak
 fi
 
-log_success "pom.xml mis à jour"
+log_success "pom.xml updated"
 
 # ============================================================================
-# ÉTAPE 3 : CRÉATION DE LA STRUCTURE DE PACKAGES
+# STEP 3: PACKAGE STRUCTURE CREATION
 # ============================================================================
-log_info "📁 ÉTAPE 3/6 : Création de la structure de packages"
+log_info "📁 STEP 3/6: Creating package structure"
 
-# Création des répertoires
+# Creating directories
 NEW_PACKAGE_DIR="src/main/java/$JAVA_PACKAGE_PATH"
 mkdir -p "$NEW_PACKAGE_DIR"/{resource,model,service,exception}
 
-# Création des répertoires de test
+# Creating test directories
 NEW_TEST_PACKAGE_DIR="src/test/java/$JAVA_PACKAGE_PATH"
 mkdir -p "$NEW_TEST_PACKAGE_DIR"/{resource,service}
 
-log_success "Structure de packages créée"
+log_success "Package structure created"
 
 # ============================================================================
-# ÉTAPE 4 : MIGRATION DES FICHIERS SOURCES
+# STEP 4: SOURCE FILES MIGRATION
 # ============================================================================
-log_info "🔄 ÉTAPE 4/6 : Migration des fichiers sources"
+log_info "🔄 STEP 4/6: Migrating source files"
 
-# Copie et adaptation des exemples vers le nouveau package
+# Copy and adapt examples to the new package
 if [ -f "src/main/java/org/acme/GreetingResource.java" ]; then
-    # Adaptation du GreetingResource
+    # Adapting GreetingResource
     sed "s/package org.acme;/package $JAVA_PACKAGE.resource;/" \
         src/main/java/org/acme/GreetingResource.java > "$NEW_PACKAGE_DIR/resource/GreetingResource.java"
 fi
 
-if [ -f "src/main/java/org/acme/CarResource.java" ]; then
-    # Adaptation du CarResource
-    sed "s/package org.acme;/package $JAVA_PACKAGE.resource;/" \
-        src/main/java/org/acme/CarResource.java > "$NEW_PACKAGE_DIR/resource/CarResource.java"
-fi
-
-# Copie du template d'endpoint
-if [ -f "src/main/java/org/acme/template/TemplateResource.java" ]; then
-    sed "s/package org.acme.template;/package $JAVA_PACKAGE.resource;/" \
-        src/main/java/org/acme/template/TemplateResource.java > "$NEW_PACKAGE_DIR/resource/TemplateResource.java"
-fi
-
-# Copie des exemples avancés
-if [ -f "src/main/java/org/acme/examples/ExamplesResource.java" ]; then
-    sed "s/package org.acme.examples;/package $JAVA_PACKAGE.resource;/" \
-        src/main/java/org/acme/examples/ExamplesResource.java > "$NEW_PACKAGE_DIR/resource/ExamplesResource.java"
-fi
-
-# Migration des tests
+# Test migration
 if [ -f "src/test/java/org/acme/GreetingResourceTest.java" ]; then
     sed "s/package org.acme;/package $JAVA_PACKAGE.resource;/" \
         src/test/java/org/acme/GreetingResourceTest.java > "$NEW_TEST_PACKAGE_DIR/resource/GreetingResourceTest.java"
 fi
 
-if [ -f "src/test/java/org/acme/CarResourceTest.java" ]; then
-    sed "s/package org.acme;/package $JAVA_PACKAGE.resource;/" \
-        src/test/java/org/acme/CarResourceTest.java > "$NEW_TEST_PACKAGE_DIR/resource/CarResourceTest.java"
-fi
-
-log_success "Fichiers sources migrés"
+log_success "Source files migrated"
 
 # ============================================================================
-# ÉTAPE 5 : MISE À JOUR DE APPLICATION.PROPERTIES
+# STEP 5: APPLICATION.PROPERTIES UPDATE
 # ============================================================================
-log_info "⚙️  ÉTAPE 5/6 : Mise à jour de application.properties"
+log_info "⚙️  STEP 5/6: Updating application.properties"
 
 if [ -f "src/main/resources/application-template.properties" ]; then
     cp src/main/resources/application-template.properties src/main/resources/application.properties
     
-    # Remplacement des variables
+    # Variable replacement
     sed -i.bak "s/\${PROJECT_NAME:quarkus-lambda-bootstrap}/$MAVEN_ARTIFACT_ID/g" src/main/resources/application.properties
     sed -i.bak "s/\${PROJECT_VERSION:1.0.0-SNAPSHOT}/1.0.0-SNAPSHOT/g" src/main/resources/application.properties
     
     rm src/main/resources/application.properties.bak
 else
-    # Création d'un application.properties basique
+    # Creating a basic application.properties
     cat > src/main/resources/application.properties << EOF
 # Configuration $PROJECT_NAME
 quarkus.application.name=$MAVEN_ARTIFACT_ID
@@ -276,14 +215,14 @@ quarkus.log.level=INFO
 EOF
 fi
 
-log_success "application.properties mis à jour"
+log_success "application.properties updated"
 
 # ============================================================================
-# ÉTAPE 6 : NETTOYAGE ET FINALISATION
+# STEP 6: CLEANUP AND FINALIZATION
 # ============================================================================
-log_info "🧹 ÉTAPE 6/6 : Nettoyage et finalisation"
+log_info "🧹 STEP 6/6: Cleanup and finalization"
 
-# Suppression des anciens packages
+# Remove old packages
 if [ -d "src/main/java/org/acme" ] && [ "$JAVA_PACKAGE" != "org.acme" ]; then
     rm -rf src/main/java/org/acme
 fi
@@ -292,123 +231,122 @@ if [ -d "src/test/java/org/acme" ] && [ "$JAVA_PACKAGE" != "org.acme" ]; then
     rm -rf src/test/java/org/acme
 fi
 
-# Suppression des fichiers template
+# Remove template files
 rm -f pom-template.xml
 rm -f src/main/resources/application-template.properties
 rm -f .env.template
 rm -f .env.init-template
 
-# Mise à jour du .gitignore pour le nouveau projet
-log_info "Mise à jour du .gitignore..."
+# Update .gitignore for the new project
+log_info "Updating .gitignore..."
 if [ -f ".gitignore.new-project" ]; then
     mv .gitignore.new-project .gitignore
-    log_success "✅ .gitignore mis à jour pour le nouveau projet"
+    log_success "✅ .gitignore updated for the new project"
 else
-    log_warning "⚠️  Fichier .gitignore.new-project non trouvé"
+    log_warning "⚠️  File .gitignore.new-project not found"
 fi
 
-# Suppression des fichiers bootstrap (après transformation)
-log_info "Suppression des fichiers bootstrap..."
+# Remove bootstrap files (after transformation)
+log_info "Removing bootstrap files..."
 rm -f README-BOOTSTRAP.md
 rm -f verify-bootstrap.sh
-# Note: on garde init-project.sh pour que l'utilisateur puisse voir comment il a été configuré
-# Il peut le supprimer manuellement s'il le souhaite
+# Note: we keep init-project.sh so the user can see how it was configured
+# They can delete it manually if they want
 
-log_success "✅ Projet transformé avec succès"
+log_success "✅ Project successfully transformed"
 
-# Création du README personnalisé
+# Creating personalized README
 cat > README.md << EOF
 # 🚀 $PROJECT_NAME
 
-API REST Quarkus native déployée sur AWS Lambda avec Function URL.
+Native Quarkus REST API deployed on AWS Lambda with Function URL.
 
 ## 🏗️ Architecture
 
-Cette API utilise :
-- **Quarkus** pour le framework REST
-- **Compilation native** avec GraalVM (cold start < 500ms)
-- **AWS Lambda** avec Function URL
-- **Architecture ARM64** pour les performances
+This API uses:
+- **Quarkus** for the REST framework
+- **Native compilation** with GraalVM (cold start < 500ms)
+- **AWS Lambda** with Function URL
+- **ARM64 architecture** for performance
 
-## 🚀 Démarrage rapide
+## 🚀 Quick start
 
-### Développement local
+### Local development
 \`\`\`bash
-# Mode développement
+# Development mode
 ./mvnw quarkus:dev
 
 # Tests
 ./mvnw test
 \`\`\`
 
-### Déploiement sur AWS
+### AWS deployment
 \`\`\`bash
-# Configuration (première fois)
+# Configuration (first time)
 cp .env.template .env
-# Éditez .env avec vos paramètres AWS
+# Edit .env with your AWS parameters
 
-# Déploiement complet
+# Complete deployment
 ./scripts/deploy.sh
 \`\`\`
 
-## 📋 Endpoints disponibles
+## 📋 Available endpoints
 
-| Endpoint | Méthode | Description |
+| Endpoint | Method | Description |
 |----------|---------|-------------|
-| \`/hello\` | GET | Message de bienvenue |
-| \`/car\` | GET, POST | Gestion des voitures (exemple) |
-| \`/template\` | GET, POST, PUT, DELETE | Template d'endpoint CRUD |
-| \`/examples/*\` | Variées | Exemples d'endpoints avancés |
+| \`/hello\` | GET | Welcome message |
+| \`/hello\` | GET | Simple greeting |
+| \`/q/health\` | GET | Health check endpoint |
 
 ## 🔧 Configuration
 
-Principales variables dans \`.env\` :
-- \`AWS_ACCOUNT_ID\` : Votre compte AWS
-- \`AWS_REGION\` : Région de déploiement (défaut: eu-west-3)
-- \`LAMBDA_FUNCTION_NAME\` : Nom de la fonction Lambda
-- \`ECR_REPOSITORY_NAME\` : Repository ECR pour l'image
+Main variables in \`.env\`:
+- \`AWS_ACCOUNT_ID\`: Your AWS account
+- \`AWS_REGION\`: Deployment region (default: eu-west-3)
+- \`LAMBDA_FUNCTION_NAME\`: Lambda function name
+- \`ECR_REPOSITORY_NAME\`: ECR repository for the image
 
 ## 📚 Documentation
 
-- [Guide de déploiement](docs/DEPLOYMENT.md)
-- [Documentation API](docs/API.md)
-- [Ajout d'endpoints](docs/ENDPOINTS.md)
+- [Deployment guide](docs/DEPLOYMENT.md)
+- [API documentation](docs/API.md)
+- [Adding endpoints](docs/ENDPOINTS.md)
 
 ---
 
-**Généré avec le bootstrap Quarkus Lambda le $(date)**
+**Generated with Quarkus Lambda bootstrap on $(date)**
 EOF
 
-log_success "Projet nettoyé et finalisé"
+log_success "Project cleaned and finalized"
 
 # ============================================================================
-# RÉSUMÉ FINAL
+# FINAL SUMMARY
 # ============================================================================
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_success "🎉 INITIALISATION TERMINÉE AVEC SUCCÈS !"
+log_success "🎉 INITIALIZATION COMPLETED SUCCESSFULLY!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "✅ Projet configuré      : $PROJECT_NAME"
-echo "✅ Package Java          : $JAVA_PACKAGE"
-echo "✅ Structure créée       : src/main/java/$JAVA_PACKAGE_PATH"
+echo "✅ Project configured     : $PROJECT_NAME"
+echo "✅ Java package          : $JAVA_PACKAGE"
+echo "✅ Structure created     : src/main/java/$JAVA_PACKAGE_PATH"
 echo "✅ Configuration         : .env"
-echo "✅ Scripts de déploiement : scripts/"
+echo "✅ Deployment scripts    : scripts/"
 echo ""
-log_title "PROCHAINES ÉTAPES :"
+log_title "NEXT STEPS:"
 echo ""
-echo "1️⃣  Configurez votre compte AWS dans .env :"
-echo "   AWS_ACCOUNT_ID=\"votre-compte-id\""
+echo "1️⃣  Configure your AWS account in .env:"
+echo "   AWS_ACCOUNT_ID=\"your-account-id\""
 echo ""
-echo "2️⃣  Testez en local :"
+echo "2️⃣  Test locally:"
 echo "   ./mvnw quarkus:dev"
 echo ""
-echo "3️⃣  Déployez sur AWS :"
+echo "3️⃣  Deploy to AWS:"
 echo "   ./scripts/deploy.sh"
 echo ""
-echo "4️⃣  Ajoutez vos endpoints dans :"
+echo "4️⃣  Add your endpoints in:"
 echo "   src/main/java/$JAVA_PACKAGE_PATH/resource/"
 echo ""
-echo "📚 Documentation complète dans README.md"
+echo "📚 Complete documentation in README.md"
 echo ""
-log_success "Bon développement ! 🚀"
+log_success "Happy coding! 🚀"

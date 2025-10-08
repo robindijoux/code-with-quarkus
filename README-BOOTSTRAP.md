@@ -10,7 +10,7 @@ This project is a **template** ready to be forked to quickly create native Quark
 - [Adding New Endpoints](#adding-new-endpoints)
 - [Deployment](#deployment)
 - [Advanced Customization](#advanced-customization)
-- [Troubleshooting](#troubleshooting)
+│       └── GreetingResource.java # 📄 Endpoint de base[Troubleshooting](#troubleshooting)
 
 ---
 
@@ -69,7 +69,7 @@ cd YOUR-PROJECT
 
 # Tests
 curl http://localhost:8080/hello
-curl http://localhost:8080/car
+curl http://localhost:8080/template/count
 ```
 
 ### 3️⃣ Deploy to AWS
@@ -459,7 +459,7 @@ VOTRE-PROJET/
 </dependency>
 ```
 
-#### 2. JSON non sérialisé (retourne "org.acme.Car@xxx")
+#### 2. JSON non sérialisé (retourne une représentation d'objet au lieu du JSON)
 
 **Cause** : Extension Jackson manquante
 

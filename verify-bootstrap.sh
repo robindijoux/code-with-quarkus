@@ -112,8 +112,7 @@ echo ""
 
 # === CODE EXAMPLES ===
 log_info "💻 Verifying code examples"
-check_file "src/main/java/org/acme/template/TemplateResource.java" "Endpoint template"
-check_file "src/main/java/org/acme/examples/ExamplesResource.java" "Advanced examples"
+check_file "src/main/java/org/acme/GreetingResource.java" "Simple greeting endpoint"
 echo ""
 
 # === DOCKER CONFIGURATION ===

@@ -1,14 +1,16 @@
 # ============================================================================
-# 🚀 QUARKUS LAMBDA BOOTSTRAP - GITIGNORE
+# 🚀 GITIGNORE POUR NOUVEAU PROJET QUARKUS LAMBDA
 # ============================================================================
+# Ce fichier remplacera .gitignore lors de l'initialisation du nouveau projet
 
 # === CONFIGURATION SENSIBLE ===
 .env
+.env.deployment
 .env.local
 .env.production
 *.env
 
-# Clés AWS (au cas où)
+# Clés AWS (IMPORTANT!)
 *.pem
 *.key
 *-key.json
@@ -54,11 +56,6 @@ local.properties
 # VS Code
 .vscode/
 .factorypath
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
 
 # NetBeans
 nb-configuration.xml
@@ -97,10 +94,6 @@ $RECYCLE.BIN/
 .Trash-*
 .nfs*
 
-# Vim
-*.swp
-*.swo
-
 # === LOGS ===
 *.log
 logs/
@@ -121,6 +114,11 @@ quarkus.log
 .certs/
 *.pem
 
+# === DÉPLOIEMENT ===
+trust-policy.json
+deploy-*.log
+build-*.log
+
 # === BACKUP ET TEMP ===
 *.backup
 *.tmp
@@ -128,14 +126,3 @@ quarkus.log
 *~
 *.orig
 *.rej
-
-# === FICHIERS GÉNÉRÉS APRÈS INIT DU BOOTSTRAP ===
-# Ces fichiers sont supprimés après la transformation du bootstrap
-# pom-template.xml (renommé en pom.xml)
-# application-template.properties (renommé)
-# .env.template (copié en .env)
-
-# === SCRIPTS DE DÉPLOIEMENT TEMPORAIRES ===
-trust-policy.json
-deploy-*.log
-build-*.log

@@ -80,10 +80,8 @@ cp .env.template .env
 
 | Endpoint | Description | Type |
 |----------|-------------|------|
-| `/hello` | Welcome message | Simple |
-| `/car` | Complete CRUD (cars) | Basic CRUD |
-| `/template` | Documented template | Development guide |
-| `/examples/*` | Advanced patterns | Pagination, filters, stats |
+| `/api/hello` | Welcome message | Simple |
+| `/q/health` | Health check | Quarkus health |
 
 ### 🛠️ Automated scripts
 
@@ -109,20 +107,12 @@ cp .env.template .env
 # Variables (after deployment)
 LAMBDA_URL="https://your-lambda-url"
 
-# Basic tests
-curl $LAMBDA_URL/hello
-# → "Hello from Quarkus REST"
+# Simple greeting
+curl "$LAMBDA_URL/api/hello"
 
-curl $LAMBDA_URL/car
-# → [{"id":1,"brand":"Tesla","model":"Model 3"}]
-
-# Create a car
-curl -X POST $LAMBDA_URL/car \
-  -H "Content-Type: application/json" \
-  -d '{"brand":"BMW","model":"i4"}'
-
-# Advanced API with pagination
-curl "$LAMBDA_URL/examples/users?page=0&size=5&status=ACTIVE"
+# Health check
+curl "$LAMBDA_URL/q/health"
+```
 ```
 
 ---
@@ -154,21 +144,21 @@ curl "$LAMBDA_URL/examples/users?page=0&size=5&status=ACTIVE"
 
 ### Adding a new endpoint
 
-1. **Copy the template:**
-   ```bash
-   cp src/main/java/YOUR_PACKAGE/resource/TemplateResource.java \
-      src/main/java/YOUR_PACKAGE/resource/UserResource.java
-   ```
-
-2. **Adapt to your needs:**
+1. **Create your resource:**
    ```java
-   @Path("/users")  // ← Change the path
+   @Path("/users")
+   @Produces(MediaType.APPLICATION_JSON)
+   @Consumes(MediaType.APPLICATION_JSON) 
    public class UserResource {
-       // Adapt methods and entities
+   
+       @GET
+       public String getUsers() {
+           return "List of users";
+       }
    }
    ```
 
-3. **Deploy:**
+2. **Deploy:**
    ```bash
    ./scripts/deploy.sh
    ```

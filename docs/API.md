@@ -1,233 +1,394 @@
-# 📚 Quarkus Lambda Bootstrap API Documentation
+# 📚 API Documentation# 📚 Quarkus Lambda Bootstrap API Documentation
 
-## 🎯 Overview
 
-This REST API uses Quarkus compiled natively and deployed on AWS Lambda with Function URL.
 
-**Architecture:**
-- ⚡ Cold start < 500ms (native compilation)
-- 🏗️ ARM64 architecture (optimal performance)
-- 🌐 Single URL for the entire API
-- 📦 Containerization with Docker
+## 🎯 Overview## 🎯 Overview
 
----
 
-## 🔗 Available endpoints
 
-### 👋 Base endpoint
+This REST API uses Quarkus compiled natively and deployed on AWS Lambda with Function URL.This REST API uses Quarkus compiled natively and deployed on AWS Lambda with Function URL.
 
-| Endpoint | Method | Description | Response |
-|----------|---------|-------------|---------|
-| `/hello` | GET | Welcome message | `"Hello from Quarkus REST"` |
 
-**Example:**
-```bash
-curl https://LAMBDA-URL/hello
-```
 
----
+**Architecture:****Architecture:**
 
-### 🚗 Car management (CRUD Example)
+- ⚡ Cold start < 500ms (native compilation)- ⚡ Cold start < 500ms (native compilation)
 
-| Endpoint | Method | Description | Request Body |
-|----------|---------|-------------|--------------|
-| `/car` | GET | List all cars | - |
-| `/car/{id}` | GET | Get a car | - |
-| `/car` | POST | Create a new car | `{"brand": "Tesla", "model": "Model 3"}` |
-| `/car/{id}` | PUT | Update a car | `{"brand": "Tesla", "model": "Model S"}` |
-| `/car/{id}` | DELETE | Delete a car | - |
+- 🏗️ ARM64 architecture (optimal performance)- 🏗️ ARM64 architecture (optimal performance)
 
-**Examples:**
-```bash
-# List all cars
-curl https://LAMBDA-URL/car
+- 🌐 Single URL for the entire API- 🌐 Single URL for the entire API
 
-# Get car with ID 1
-curl https://LAMBDA-URL/car/1
+- 📦 Containerization with Docker- 📦 Containerization with Docker
 
-# Create a new car
-curl -X POST https://LAMBDA-URL/car \
-  -H "Content-Type: application/json" \
-  -d '{"brand": "Tesla", "model": "Model 3"}'
 
-# Update car with ID 1
-curl -X PUT https://LAMBDA-URL/car/1 \
-  -H "Content-Type: application/json" \
-  -d '{"brand": "Tesla", "model": "Model S"}'
 
-# Delete car with ID 1
-curl -X DELETE https://LAMBDA-URL/car/1
-```
+------
 
----
 
-### 📄 Endpoint template (Development Guide)
 
-| Endpoint | Method | Description |
+## 🔗 Available endpoints## 🔗 Available endpoints
+
+
+
+### 👋 Simple greeting### 👋 Base endpoint
+
+
+
+| Endpoint | Method | Description | Response || Endpoint | Method | Description | Response |
+
+|----------|---------|-------------|---------||----------|---------|-------------|---------|
+
+| `/api/hello` | GET | Welcome message | `"Hello from Quarkus REST"` || `/hello` | GET | Welcome message | `"Hello from Quarkus REST"` |
+
+
+
+**Example:****Example:**
+
+```bash```bash
+
+curl https://LAMBDA-URL/api/hellocurl https://LAMBDA-URL/hello
+
+``````
+
+
+
+### 🏥 Health checks---
+
+
+
+| Endpoint | Method | Description |### 📄 Endpoint template (Development Guide)
+
 |----------|---------|-------------|
-| `/template` | GET | List all template items |
+
+| `/q/health` | GET | Application health status || Endpoint | Method | Description |
+
+| `/q/health/live` | GET | Liveness check ||----------|---------|-------------|
+
+| `/q/health/ready` | GET | Readiness check || `/template` | GET | List all template items |
+
 | `/template/{id}` | GET | Get an item by ID |
-| `/template` | POST | Create a new item |
-| `/template/{id}` | PUT | Update an item |
-| `/template/{id}` | DELETE | Delete an item |
-| `/template/search?name=xxx` | GET | Search by name |
+
+**Examples:**| `/template` | POST | Create a new item |
+
+```bash| `/template/{id}` | PUT | Update an item |
+
+# Overall health| `/template/{id}` | DELETE | Delete an item |
+
+curl https://LAMBDA-URL/q/health| `/template/search?name=xxx` | GET | Search by name |
+
 | `/template/count` | GET | Count items |
 
-**Examples:**
+# Liveness probe  
+
+curl https://LAMBDA-URL/q/health/live**Examples:**
+
 ```bash
-# List all items
-curl https://LAMBDA-URL/template
 
-# Search by name
-curl https://LAMBDA-URL/template/search?name=item
+# Readiness probe# List all items
 
-# Create a new item
-curl -X POST https://LAMBDA-URL/template \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My item", "description": "Description of my item"}'
+curl https://LAMBDA-URL/q/health/readycurl https://LAMBDA-URL/template
+
 ```
 
----
+# Search by name
+
+---curl https://LAMBDA-URL/template/search?name=item
+
+
+
+## 📝 Response formats# Create a new item
+
+curl -X POST https://LAMBDA-URL/template \
+
+### Success responses  -H "Content-Type: application/json" \
+
+  -d '{"name": "My item", "description": "Description of my item"}'
+
+**Simple text:**```
+
+```
+
+Hello from Quarkus REST---
+
+```
 
 ### 🚀 Advanced examples
 
-Endpoints demonstrating advanced patterns:
+**Health check:**
 
-#### 👥 User management
+```jsonEndpoints demonstrating advanced patterns:
 
-| Endpoint | Method | Description | Parameters |
-|----------|---------|-------------|------------|
+{
+
+  "status": "UP",#### 👥 User management
+
+  "checks": []
+
+}| Endpoint | Method | Description | Parameters |
+
+```|----------|---------|-------------|------------|
+
 | `/examples/users` | GET | List with pagination and filters | `page`, `size`, `status`, `search` |
-| `/examples/users/{id}` | GET | User with their orders | - |
+
+### Error responses| `/examples/users/{id}` | GET | User with their orders | - |
+
 | `/examples/users` | POST | Create a user | `{"name": "...", "email": "..."}` |
 
-**Examples:**
-```bash
-# List with pagination
-curl "https://LAMBDA-URL/examples/users?page=0&size=5&status=ACTIVE"
+**Error 404 (Not Found):**
 
-# Search users
+```json**Examples:**
+
+{```bash
+
+  "error": "Endpoint not found",# List with pagination
+
+  "timestamp": 1705312200000curl "https://LAMBDA-URL/examples/users?page=0&size=5&status=ACTIVE"
+
+}
+
+```# Search users
+
 curl "https://LAMBDA-URL/examples/users?search=alice"
 
-# Create a user
-curl -X POST https://LAMBDA-URL/examples/users \
-  -H "Content-Type: application/json" \
-  -d '{"name": "John Doe", "email": "john@example.com"}'
+**Error 500 (Internal Server Error):**
+
+```json# Create a user
+
+{curl -X POST https://LAMBDA-URL/examples/users \
+
+  "error": "Internal server error",  -H "Content-Type: application/json" \
+
+  "timestamp": 1705312200000  -d '{"name": "John Doe", "email": "john@example.com"}'
+
+}```
+
 ```
 
 #### 🛒 Order management
 
+---
+
 | Endpoint | Method | Description |
-|----------|---------|-------------|
+
+## 🔧 HTTP Headers|----------|---------|-------------|
+
 | `/examples/users/{userId}/orders` | GET | Orders for a user |
-| `/examples/users/{userId}/orders` | POST | New order |
 
-**Examples:**
-```bash
-# User orders
-curl https://LAMBDA-URL/examples/users/1/orders
+### Required headers| `/examples/users/{userId}/orders` | POST | New order |
 
-# New order
+
+
+For requests with body (POST, PUT):**Examples:**
+
+``````bash
+
+Content-Type: application/json# User orders
+
+```curl https://LAMBDA-URL/examples/users/1/orders
+
+
+
+### Response headers# New order
+
 curl -X POST https://LAMBDA-URL/examples/users/1/orders \
-  -H "Content-Type: application/json" \
-  -d '{"items": [{"name": "Laptop", "quantity": 1, "price": 999.99}]}'
+
+All responses include:  -H "Content-Type: application/json" \
+
+```  -d '{"items": [{"name": "Laptop", "quantity": 1, "price": 999.99}]}'
+
+Content-Type: application/json```
+
 ```
 
 #### 📊 Statistics and monitoring
 
-| Endpoint | Method | Description |
-|----------|---------|-------------|
-| `/examples/stats` | GET | Global statistics |
-| `/examples/users/top` | GET | Top 5 users |
-| `/examples/health` | GET | Detailed health check |
-
-**Examples:**
-```bash
-# Statistics
-curl https://LAMBDA-URL/examples/stats
-
-# Top users
-curl https://LAMBDA-URL/examples/users/top
-
-# Health check
-curl https://LAMBDA-URL/examples/health
-```
-
 ---
 
-## 📝 Response formats
+| Endpoint | Method | Description |
+
+## 🧪 Testing|----------|---------|-------------|
+
+| `/examples/stats` | GET | Global statistics |
+
+### Basic tests| `/examples/users/top` | GET | Top 5 users |
+
+| `/examples/health` | GET | Detailed health check |
+
+```bash
+
+# Set base URL**Examples:**
+
+export LAMBDA_URL="https://your-lambda-url"```bash
+
+# Statistics
+
+# Test greetingcurl https://LAMBDA-URL/examples/stats
+
+curl $LAMBDA_URL/api/hello
+
+# Top users
+
+# Test healthcurl https://LAMBDA-URL/examples/users/top
+
+curl $LAMBDA_URL/q/health
+
+```# Health check
+
+curl https://LAMBDA-URL/examples/health
+
+### Test script```
+
+
+
+Use the provided test script:---
+
+```bash
+
+./scripts/test_lambda_requests.sh## 📝 Response formats
+
+```
 
 ### Success responses
 
+---
+
 **Simple list:**
-```json
+
+## 📊 Performance```json
+
 [
-  {"id": 1, "name": "Item 1"},
+
+### Benchmark metrics  {"id": 1, "name": "Item 1"},
+
   {"id": 2, "name": "Item 2"}
-]
-```
 
-**Pagination:**
-```json
-{
+| Metric | Value | Notes |]
+
+|----------|--------|-------|```
+
+| **Cold Start** | < 500ms | First invocation |
+
+| **Warm Request** | < 10ms | Subsequent requests |**Pagination:**
+
+| **Memory size** | 64-128 MB | Runtime |```json
+
+| **Configured timeout** | 30s | Adjustable |{
+
   "content": [
-    {"id": 1, "name": "User 1"}
-  ],
-  "page": 0,
-  "size": 10,
-  "totalElements": 25,
-  "totalPages": 3
-}
-```
 
-**Creation (status 201):**
-```json
-{
-  "id": 3,
-  "name": "New item",
-  "createdAt": "2024-01-15T10:30:00"
+### Optimizations    {"id": 1, "name": "User 1"}
+
+  ],
+
+1. **Lambda memory**: 512 MB recommended  "page": 0,
+
+2. **Architecture**: ARM64 (better performance)  "size": 10,
+
+3. **Keep-alive**: Lambda keeps containers warm  "totalElements": 25,
+
+4. **Native compilation**: Drastically reduces cold start  "totalPages": 3
+
 }
-```
+
+---```
+
+
+
+## 🚨 Error handling**Creation (status 201):**
+
+```json
+
+### HTTP status codes{
+
+  "id": 3,
+
+| Code | Meaning | Usage |  "name": "New item",
+
+|------|---------------|-------|  "createdAt": "2024-01-15T10:30:00"
+
+| 200 | OK | Success |}
+
+| 404 | Not Found | Endpoint not found |```
+
+| 500 | Internal Server Error | Server error |
 
 ### Error responses
 
+### Debugging
+
 **Error 400 (Bad Request):**
-```json
+
+To check error logs:```json
+
 {
-  "error": "Name is required",
-  "timestamp": 1705312200000
-}
+
+```bash  "error": "Name is required",
+
+# Real-time logs  "timestamp": 1705312200000
+
+aws logs tail /aws/lambda/YOUR-FUNCTION --region YOUR-REGION --follow}
+
 ```
 
-**Error 404 (Not Found):**
-```json
+# Logs from last 10 minutes  
+
+aws logs tail /aws/lambda/YOUR-FUNCTION --region YOUR-REGION --since 10m**Error 404 (Not Found):**
+
+``````json
+
 {
-  "error": "Element with ID 999 not found",
+
+---  "error": "Element with ID 999 not found",
+
   "timestamp": 1705312200000
-}
+
+## 🔐 Security}
+
 ```
+
+### CORS
 
 **Error 409 (Conflict):**
-```json
-{
-  "error": "Email already in use",
-  "timestamp": 1705312200000
-}
-```
 
-**Validation error (400):**
+CORS is automatically configured for Function URLs:```json
+
+- Origins: `*` (should be restricted in production){
+
+- Methods: `GET, POST, PUT, DELETE, OPTIONS`  "error": "Email already in use",
+
+- Headers: `*`  "timestamp": 1705312200000
+
+}
+
+---```
+
+
+
+## 🆘 Support**Validation error (400):**
+
 ```json
-{
+
+### Frequent issues{
+
   "errors": [
-    "Name is required",
-    "Invalid email format"
-  ],
+
+1. **Error 502**: Check CloudWatch logs    "Name is required",
+
+2. **Timeout**: Increase Lambda timeout    "Invalid email format"
+
+3. **Cold start**: Use provisioned concurrency if needed  ],
+
   "timestamp": 1705312200000
-}
+
+### Contact}
+
 ```
 
----
+- 📚 Documentation: README.md
 
+- 🐛 Issues: Create a GitHub issue---
+
+- 💬 Discussions: GitHub Discussions
 ## 🔧 Headers HTTP
 
 ### Headers requis

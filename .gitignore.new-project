@@ -5,6 +5,7 @@
 
 # === CONFIGURATION SENSIBLE ===
 .env
+.env.deployment
 .env.local
 .env.production
 *.env

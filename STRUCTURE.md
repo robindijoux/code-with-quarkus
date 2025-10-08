@@ -36,7 +36,6 @@ code-with-quarkus/                    # 🏠 Bootstrap root
 │   │   ├── java/org/acme/
 │   │   │   └── resource/
 │   │   │       ├── GreetingResource.java    # Endpoint simple
-│   │   │       ├── CarResource.java         # CRUD basique
 │   │   │       ├── TemplateResource.java    # 🎯 Template documenté
 │   │   │       └── ExamplesResource.java    # Patterns avancés
 │   │   ├── resources/
@@ -93,7 +92,6 @@ code-with-quarkus/                    # 🏠 Bootstrap root
 | `TemplateResource.java` | **🎯 Template** | Modèle pour nouveaux endpoints |
 | `ExamplesResource.java` | Exemples | Patterns avancés et bonnes pratiques |
 | `GreetingResource.java` | Simple | Endpoint de base |
-| `CarResource.java` | CRUD | Exemple CRUD complet |
 
 ## 🔄 Processus de transformation
 
