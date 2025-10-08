@@ -11,7 +11,7 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public class CarResource {
 
-    // Simulation d'une base de données
+    // Database simulation
     private static List<Car> cars = new ArrayList<>();
     
     static {

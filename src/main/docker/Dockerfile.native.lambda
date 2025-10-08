@@ -1,0 +1,24 @@
+####
+# This Dockerfile is used to build a native Quarkus application for AWS Lambda
+#
+# Before building the container image run:
+#
+# ./mvnw package -Pnative -Dquarkus.native.container-build=true
+#
+# Then, build the image with:
+#
+# docker build -f src/main/docker/Dockerfile.native.lambda -t portfolio-rbndjx:lambda .
+#
+# Then push to ECR and deploy to Lambda
+###
+
+FROM public.ecr.aws/lambda/provided:al2023
+
+# Copy the native executable to the Lambda runtime directory
+COPY target/*-runner ${LAMBDA_RUNTIME_DIR}/bootstrap
+
+# Make it executable
+RUN chmod 755 ${LAMBDA_RUNTIME_DIR}/bootstrap
+
+# Set the CMD to your handler (not used but required)
+CMD [ "not.used.in.provided.runtime" ]

@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <!-- 🔧 À PERSONNALISER : Informations du projet -->
+    <groupId>${MAVEN_GROUP_ID:org.acme}</groupId>
+    <artifactId>${MAVEN_ARTIFACT_ID:quarkus-lambda-bootstrap}</artifactId>
+    <version>${PROJECT_VERSION:1.0.0-SNAPSHOT}</version>
+    <name>${PROJECT_NAME:Quarkus Lambda Bootstrap}</name>
+    <description>${PROJECT_DESCRIPTION:Bootstrap project for Quarkus Lambda APIs}</description>
+
+    <properties>
+        <compiler-plugin.version>3.14.0</compiler-plugin.version>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+        <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+        <quarkus.platform.version>3.27.0</quarkus.platform.version>
+        <skipITs>true</skipITs>
+        <surefire-plugin.version>3.5.3</surefire-plugin.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>${quarkus.platform.artifact-id}</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- ========================================= -->
+        <!-- 🏗️ CORE QUARKUS DEPENDENCIES (REQUIRED) -->
+        <!-- ========================================= -->
+        
+        <!-- Dependency Injection -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-arc</artifactId>
+        </dependency>
+        
+        <!-- REST API with JAX-RS -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-rest</artifactId>
+        </dependency>
+        
+        <!-- JSON Serialization - REQUIRED for JSON APIs -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-rest-jackson</artifactId>
+        </dependency>
+        
+        <!-- AWS Lambda HTTP - REQUIRED for Lambda Function URL -->
+        <!-- ⚠️ IMPORTANT: Use 'http' (v2) NOT 'rest' (v1) for Function URL -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-amazon-lambda-http</artifactId>
+        </dependency>
+
+        <!-- ========================================= -->
+        <!-- 🧪 TEST DEPENDENCIES -->
+        <!-- ========================================= -->
+        
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ========================================= -->
+        <!-- 📋 OPTIONAL DEPENDENCIES (Uncomment as needed) -->
+        <!-- ========================================= -->
+        
+        <!-- Database - PostgreSQL -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jdbc-postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-orm-panache</artifactId>
+        </dependency>
+        -->
+        
+        <!-- Database - MySQL -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jdbc-mysql</artifactId>
+        </dependency>
+        -->
+        
+        <!-- NoSQL - MongoDB -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-mongodb-panache</artifactId>
+        </dependency>
+        -->
+        
+        <!-- Cache - Redis -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-redis-client</artifactId>
+        </dependency>
+        -->
+        
+        <!-- Validation -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
+        -->
+        
+        <!-- OpenAPI / Swagger -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-openapi</artifactId>
+        </dependency>
+        -->
+        
+        <!-- Health Checks -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+        -->
+        
+        <!-- Metrics -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-micrometer-registry-cloudwatch</artifactId>
+        </dependency>
+        -->
+        
+        <!-- Configuration -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-config-yaml</artifactId>
+        </dependency>
+        -->
+        
+        <!-- Security - JWT -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-jwt</artifactId>
+        </dependency>
+        -->
+        
+        <!-- AWS SDK - DynamoDB -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-amazon-dynamodb</artifactId>
+        </dependency>
+        -->
+        
+        <!-- AWS SDK - S3 -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-amazon-s3</artifactId>
+        </dependency>
+        -->
+        
+        <!-- AWS SDK - SQS -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-amazon-sqs</artifactId>
+        </dependency>
+        -->
+        
+        <!-- AWS SDK - SNS -->
+        <!--
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-amazon-sns</artifactId>
+        </dependency>
+        -->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>generate-code</goal>
+                            <goal>generate-code-tests</goal>
+                            <goal>native-image-agent</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${compiler-plugin.version}</version>
+                <configuration>
+                    <parameters>true</parameters>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire-plugin.version}</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                        <maven.home>${maven.home}</maven.home>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${surefire-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <systemPropertyVariables>
+                        <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
+                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                        <maven.home>${maven.home}</maven.home>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- ========================================= -->
+        <!-- 🏗️ NATIVE BUILD PROFILE -->
+        <!-- ========================================= -->
+        <profile>
+            <id>native</id>
+            <activation>
+                <property>
+                    <name>native</name>
+                </property>
+            </activation>
+            <properties>
+                <quarkus.package.jar.enabled>false</quarkus.package.jar.enabled>
+                <skipITs>false</skipITs>
+                <quarkus.native.enabled>true</quarkus.native.enabled>
+                
+                <!-- Native build optimizations -->
+                <quarkus.native.debug.enabled>${NATIVE_DEBUG_ENABLED:false}</quarkus.native.debug.enabled>
+                <quarkus.native.enable-reports>${NATIVE_ENABLE_REPORTS:false}</quarkus.native.enable-reports>
+            </properties>
+        </profile>
+        
+        <!-- ========================================= -->
+        <!-- 🔧 DEVELOPMENT PROFILE -->
+        <!-- ========================================= -->
+        <profile>
+            <id>dev</id>
+            <properties>
+                <quarkus.log.level>DEBUG</quarkus.log.level>
+            </properties>
+        </profile>
+        
+        <!-- ========================================= -->
+        <!-- 🚀 PRODUCTION PROFILE -->
+        <!-- ========================================= -->
+        <profile>
+            <id>prod</id>
+            <properties>
+                <quarkus.log.level>INFO</quarkus.log.level>
+                <quarkus.lambda.enable-polling-jvm-mode>false</quarkus.lambda.enable-polling-jvm-mode>
+            </properties>
+        </profile>
+    </profiles>
+</project>
